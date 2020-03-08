@@ -1,24 +1,46 @@
-import Layout from "../components/MyLayout";
-import Link from "next/link";
+import { useRouter } from "next/router";
+import useSWR from "swr";
 
-const PostLink = props => (
-  <li>
-    <Link href="/p/[id]" as={`/p/${props.id}`}>
-      <a>{props.id}</a>
-    </Link>
-  </li>
-);
+function fetcher(url) {
+  return fetch(url).then(r => r.json());
+}
+
 export default function Index() {
+  const { query } = useRouter();
+  const { data, error } = useSWR(
+    `/api/randomQuote${query.author ? "?author=" + query.author : ""}`,
+    fetcher
+  );
+
+  // with optional chaining
+  const author = data?.author;
+  let quote = data?.quote;
+
+  if (!data) quote = "Loading...";
+  if (error) quote = "Failed to fetch the quote.";
+
   return (
-    <div>
-      <Layout>
-        <h1>My Blog</h1>
-        <ul>
-          <PostLink id="hello-nextjs" />
-          <PostLink id="learn-nextjs" />
-          <PostLink id="deploy-nextjs" />
-        </ul>
-      </Layout>
-    </div>
+    <main className="center">
+      <div className="quote">{quote}</div>
+      {author && <span className="author">- {author}</span>}
+
+      <style jsx>{`
+        main {
+          width: 90%;
+          max-width: 900px;
+        }
+        .quote {
+          font-family: cursive;
+          color: #e243de;
+          font-size: 24px;
+          padding-bottom: 10px;
+        }
+        .author {
+          font-family: sans-serif;
+          color: #559834;
+          font-size: 20px;
+        }
+      `}</style>
+    </main>
   );
 }
